@@ -1,0 +1,138 @@
+{
+  "sessions": [
+    {
+      "center_id": 566656,
+      "name": "District Hospital Bareilly",
+      "address": "District Hospital",
+      "state_name": "Uttar Pradesh",
+      "district_name": "Bareilly",
+      "block_name": "Civil Line UPHC",
+      "pincode": 243001,
+      "from": "09:00:00",
+      "to": "17:00:00",
+      "lat": 28,
+      "long": 79,
+      "fee_type": "Free",
+      "session_id": "f349eb34-f5ba-4c40-855c-17d667dd2ca9",
+      "date": "19-05-2021",
+      "available_capacity_dose1": 0,
+      "available_capacity_dose2": 20,
+      "available_capacity": 20,
+      "fee": "0",
+      "min_age_limit": 45,
+      "vaccine": "COVISHIELD",
+      "slots": [
+        "09:00AM-11:00AM",
+        "11:00AM-01:00PM",
+        "01:00PM-03:00PM",
+        "03:00PM-05:00PM"
+      ]
+    },
+    {
+      "center_id": 610552,
+      "name": "Subhas Nagar Uphc Bareilly",
+      "address": "Subhash Nagar Bareilly",
+      "state_name": "Uttar Pradesh",
+      "district_name": "Bareilly",
+      "block_name": "Subhash Nagar UPHC",
+      "pincode": 243001,
+      "from": "09:00:00",
+      "to": "17:00:00",
+      "lat": 28,
+      "long": 79,
+      "fee_type": "Free",
+      "session_id": "b6481a0b-9ec5-4ec4-8251-960e93182027",
+      "date": "19-05-2021",
+      "available_capacity_dose1": 0,
+      "available_capacity_dose2": 20,
+      "available_capacity": 20,
+      "fee": "0",
+      "min_age_limit": 45,
+      "vaccine": "COVISHIELD",
+      "slots": [
+        "09:00AM-11:00AM",
+        "11:00AM-01:00PM",
+        "01:00PM-03:00PM",
+        "03:00PM-05:00PM"
+      ]
+    }
+  ]
+}
+import requests
+import datetime
+import schedule
+import time
+import math
+while True:
+    digits = int(math.log10(pincode))+1
+    if digits==6:
+        break
+    else:
+        print("Invalid pin..Enter again:")
+        pincode = int(input())
+        theday = datetime.date.today()
+start = theday - datetime.timedelta(days=0)
+dates = [start + datetime.timedelta(days=d) for d in range(7)]
+listOfAllCentresFor45=[]
+listOfAllCentresFor18=[]
+for d in dates:
+        d1=str(d.strftime("%d-%m-%Y"))
+        url = 'https://cdn-api.co-vin.in/api/v2/appointment/sessions/public/findByPin?
+        pincode={0}&date={1}'.format(243001,d1)
+        headers = {'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:87.0)
+                   Gecko/20100101 Firefox/87.0'}
+        x = requests.get(url, headers=headers)
+        data = x.json()
+        cnt1=1
+        cnt2=1
+        centre_detail_1 = ""
+        centre_detail_2 = ""
+        centre_detail_1 = centre_detail_1 + "Date: "+ d1 + "nn" 
+        centre_detail_2 = centre_detail_2 + "Date: "+ d1 + "nn"
+        for d in data["sessions"]:
+            if d["min_age_limit"] == 45:
+                centre_detail_1 =centre_detail_1 + "Centre {0}: ".format(cnt1)+ "nCentre Adrress:" 
+                + d['name'] + ", " + d["address"] + "nVaccine: " + d['vaccine'] 
+                + "nAvailable Capacity dose 1: " + str(d["available_capacity_dose1"]) 
+                + "nAvailable Capacity dose 2: " + str(d["available_capacity_dose2"]) + 'n'
+                listOfAllCentresFor45.append(centre_detail_1)
+                centre_detail_1=''
+                cnt1=cnt1+1
+            elif d["min_age_limit"] == 18:
+                centre_detail_2 =centre_detail_2 + "Centre {0}: ".format(cnt2)+ "nCentre Adrress:" 
+                + d['name'] + ", " + d["address"] + "nVaccine: " + d['vaccine'] 
+                + "nAvailable Capacity dose 1: " + str(d["available_capacity_dose1"]) 
+                + "nAvailable Capacity dose 2: " + str(d["available_capacity_dose2"]) + 'n' 
+                listOfAllCentresFor18.append(centre_detail_2)
+                centre_detail_2=''
+                cnt2=cnt2+1
+                messageFor45 = ""
+    if len(listOfAllCentresFor45) >0:
+        messageFor45 = messageFor45 + "*Available  vaccination centres for 45 plus:*nn"
+        for mess in  listOfAllCentresFor45:
+            messageFor45 = messageFor45 + mess
+            messageFor45 = messageFor45 + "n"
+    else:
+        messageFor45 = messageFor45 + "*No slot available for 45 and above age*"
+    base_url = "https://api.telegram.org/bot_YOUR-API_'
+    +'sendMessage?chat_id=_YOUR-CHAT-ID_&text={0}.format(messageFor45)
+    print("Response:",requests.get(base_url))
+    print("Message Sent for 45+!")
+    messageFor18 = ""
+    if len(listOfAllCentresFor18) >0:
+        messageFor18 = messageFor18 + "*Available  vaccination centres for 18 and above age:*nn"
+        for mess in  listOfAllCentresFor18:
+            messageFor18 = messageFor18 + mess
+            messageFor18 = messageFor18 + "n"
+    else:
+        messageFor18 = messageFor18 + "*No slot available for 18 and above age*"
+    base_url = 'https://api.telegram.org/bot1845865793:AAF7slwdglakV31F5Q85JFAVf-KuyPCXIQ0/sendMessage?chat_id=-518514918&text={0}'.format(messageFor18)
+    print("Response:",requests.get(base_url))
+    print("Message Sent for 18+!")
+    schedule.every().day.at("09:30").do(vaccine_notifier)
+schedule.every().day.at("14:30").do(vaccine_notifier)
+schedule.every().day.at("20:30").do(vaccine_notifier)
+print("Execution started...")
+while 1:
+    schedule.run_pending()
+    time.sleep(1)
